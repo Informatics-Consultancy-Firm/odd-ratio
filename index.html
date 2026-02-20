@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odds Ratio Analysis Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { margin: 0; padding: 20px; background-color: #ffffff; font-family: 'Oswald', Arial, sans-serif; color: #000000; font-weight: 500; }
+        .page-container { width: 100%; max-width: 1400px; margin: 0 auto; }
+        .page-header { background-color: #004080; color: #ffffff; padding: 25px 30px; text-align: center; margin-bottom: 15px; border-radius: 8px 8px 0 0; }
+        .logo-row { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 15px; }
+        .logo-box { background: #ffffff; border-radius: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; }
+        .logo-box img { width: 100px; height: auto; border-radius: 6px; }
+        .page-header h3 { margin: 12px 0 5px; font-size: 14px; font-weight: 700; letter-spacing: 1px; color: #ffffff; }
+        .page-header .tagline { margin: 0; font-size: 10px; font-weight: 500; color: #ffffff; }
+        .page-header h1 { margin: 20px 0 10px; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: 1px; }
+        .page-header .subtitle { font-size: 14px; color: #ffffff; font-weight: 500; }
+        .content-card { border: 4px double #004080; border-radius: 12px; padding: 12px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 15px; }
+        .content-inner { padding: 25px; }
+        .section-header { background-color: #004080; color: #ffffff; padding: 15px 20px; margin-bottom: 20px; border-radius: 6px; display: flex; align-items: center; gap: 15px; }
+        .section-icon { background: #ffffff; color: #004080; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+        .section-title { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        .upload-section { background: #f8f9fa; padding: 2rem; border-radius: 8px; border: 2px dashed #004080; text-align: center; margin: 1rem 0; transition: all 0.3s ease; }
+        .upload-section:hover { border-color: #0056b3; background: #e7f3ff; }
+        .upload-section.drag-over { background: #e7f3ff; border-color: #0056b3; border-style: solid; }
+        .upload-section.loaded { background: #d4edda; border-color: #28a745; border-style: solid; }
+        .upload-section h3 { color: #004080; margin-bottom: 1rem; font-size: 18px; font-weight: 700; }
+        .upload-section p { color: #000000; font-weight: 500; font-size: 14px; }
+        .file-input-wrapper { position: relative; display: inline-block; cursor: pointer; background: #004080; color: white; padding: 14px 24px; border-radius: 6px; border: 2px solid #004080; font-size: 14px; font-weight: 700; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Oswald', Arial, sans-serif; margin-top: 1rem; }
+        .file-input-wrapper:hover { background: #0056b3; border-color: #0056b3; }
+        .file-input-wrapper input[type="file"] { position: absolute; left: -9999px; }
+        .file-status { margin-top: 15px; font-weight: 700; }
+        .file-status.loaded { color: #276749; }
+        .file-status.error { color: #c53030; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin: 1.5rem 0; }
+        .stats-card { background: #f8f9fa; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); text-align: center; border: 2px solid #004080; transition: all 0.2s; }
+        .stats-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0, 64, 128, 0.2); }
+        .stats-card h4 { color: #666; font-size: 11px; margin-bottom: 0.5rem; text-transform: uppercase; }
+        .stats-card .metric-value { font-size: 1.5rem; color: #004080; margin-bottom: 0.25rem; font-weight: 700; }
+        .stats-card .metric-value.success { color: #28a745; }
+        .stats-card .metric-value.warning { color: #ffc107; }
+        .stats-card .metric-value.danger { color: #dc3545; }
+        .stats-card p { color: #666; font-size: 11px; }
+        .btn { padding: 14px 24px; border: 2px solid #004080; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Oswald', Arial, sans-serif; transition: all 0.2s; margin: 5px; }
+        .btn-primary { background: #004080; color: #ffffff; }
+        .btn-primary:hover { background: #0056b3; border-color: #0056b3; }
+        .btn-secondary { background: #ffffff; color: #004080; }
+        .btn-secondary:hover { background: #004080; color: #ffffff; }
+        .btn-gold { background: #ffc107; color: #000000; border-color: #ffc107; }
+        .btn-gold:hover { background: #e0a800; border-color: #e0a800; }
+        .btn-success { background: #28a745; color: #ffffff; border-color: #28a745; }
+        .btn-success:hover { background: #218838; border-color: #218838; }
+        .btn-danger { background: #dc3545; color: #ffffff; border-color: #dc3545; }
+        .btn-danger:hover { background: #c82333; border-color: #c82333; }
+        .btn:disabled { background: #6c757d; border-color: #6c757d; color: #ffffff; opacity: 0.6; cursor: not-allowed; }
+        .btn-sm { padding: 8px 16px; font-size: 12px; }
+        .alert { padding: 1rem; border-radius: 6px; margin: 1rem 0; font-weight: 500; }
+        .alert-success { background: #d4edda; border: 2px solid #28a745; color: #155724; }
+        .alert-warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
+        .alert-error { background: #f8d7da; border: 2px solid #dc3545; color: #721c24; }
+        .alert-info { background: #e7f3ff; border: 2px solid #004080; color: #004080; }
+        .hidden { display: none !important; }
+        .config-card { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 2px solid #004080; margin: 1rem 0; }
+        .config-card h4 { color: #004080; margin-bottom: 1rem; font-size: 16px; font-weight: 700; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1rem; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; color: #004080; font-size: 12px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .form-input, .form-select { width: 100%; padding: 12px; border: 2px solid #004080; border-radius: 6px; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 500; background: #ffffff; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #0056b3; box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2); }
+        .table-container { max-height: 400px; overflow: auto; border: 2px solid #004080; border-radius: 6px; margin: 1rem 0; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th { background: #004080; color: #ffffff; padding: 12px; text-align: center; font-weight: 700; position: sticky; top: 0; }
+        .data-table td { padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
+        .data-table td input { width: 80px; padding: 8px; border: 2px solid #004080; border-radius: 4px; text-align: center; font-family: 'Oswald', sans-serif; font-weight: 500; }
+        .data-table tr:nth-child(even) { background: #f7fafc; }
+        .data-table .total-row { background: #ebf4ff; font-weight: 700; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 1.5rem 0; }
+        .feature-card { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 2px solid #004080; }
+        .feature-card h4 { color: #004080; margin-bottom: 1rem; font-size: 16px; font-weight: 700; text-transform: uppercase; }
+        .feature-card ul, .feature-card ol { color: #000000; line-height: 1.8; padding-left: 1.5rem; }
+        .feature-card li { margin-bottom: 0.5rem; font-weight: 500; font-size: 14px; }
+        .feature-card strong { color: #004080; }
+        .result-box { background: #f8f9fa; border: 2px solid #004080; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .result-title { color: #004080; font-size: 18px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #004080; padding-bottom: 10px; }
+        .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 8px 0; background: #ffffff; border-radius: 6px; border-left: 4px solid #6c757d; }
+        .check-item.pass { border-left-color: #28a745; background: #d4edda; }
+        .check-item.fail { border-left-color: #dc3545; background: #f8d7da; }
+        .check-item.warning { border-left-color: #ffc107; background: #fff3cd; }
+        .check-icon { font-size: 20px; flex-shrink: 0; }
+        .check-content h5 { font-size: 14px; color: #004080; margin-bottom: 4px; }
+        .check-content p { font-size: 12px; color: #4a5568; margin: 0; }
+        .pub-table-container { margin: 20px 0; padding: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .pub-table-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; font-style: italic; color: #2d3748; }
+        .pub-table-note { font-size: 12px; color: #4a5568; margin-top: 12px; font-style: italic; line-height: 1.6; }
+        .pub-table { width: 100%; border-collapse: collapse; font-family: 'Times New Roman', Times, serif; font-size: 13px; }
+        .pub-table th, .pub-table td { padding: 10px 15px; text-align: center; }
+        .pub-table thead { border-top: 2px solid #000; border-bottom: 1px solid #000; }
+        .pub-table thead th { font-weight: bold; background: transparent; color: #000; }
+        .pub-table tbody { border-bottom: 2px solid #000; }
+        .pub-table tbody td { border: none; }
+        .pub-table .row-label { text-align: left; font-weight: normal; }
+        .pub-table .total-row { border-top: 1px solid #000; font-weight: bold; }
+        .chart-container { border: 2px solid #004080; border-radius: 8px; margin-top: 15px; background: #fff; min-height: 400px; }
+        .button-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; }
+        .formula-container { margin: 1rem 0; }
+        .formula-box { background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%); border: 2px solid #004080; border-radius: 8px; padding: 20px; margin-bottom: 15px; text-align: center; }
+        .formula-box h4 { color: #004080; font-size: 16px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .formula { font-family: 'Times New Roman', Times, serif; font-size: 24px; color: #000; padding: 15px; background: #fff; border-radius: 6px; border: 1px solid #004080; display: inline-block; margin: 10px 0; font-style: italic; }
+        .formula-small { font-size: 18px; }
+        .formula-note { font-size: 12px; color: #666; margin-top: 10px; font-style: italic; }
+        .parameters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin: 15px 0; }
+        .parameter-card { background: #fff; border: 2px solid #004080; border-radius: 8px; padding: 15px; transition: all 0.2s; }
+        .parameter-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 64, 128, 0.15); }
+        .param-symbol { font-family: 'Times New Roman', Times, serif; font-size: 22px; color: #004080; font-weight: bold; font-style: italic; margin-bottom: 5px; }
+        .param-name { font-size: 14px; font-weight: 700; color: #004080; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .param-desc { font-size: 13px; color: #333; line-height: 1.6; }
+        .output-explanation { background: #fff; border: 2px solid #004080; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .output-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
+        .output-card { background: #f8f9fa; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden; transition: all 0.2s; }
+        .output-card:hover { border-color: #004080; box-shadow: 0 4px 12px rgba(0, 64, 128, 0.1); }
+        .output-card.highlight-card { border-color: #004080; background: linear-gradient(135deg, #e7f3ff 0%, #f0f7ff 100%); }
+        .output-header { background: #004080; color: #fff; padding: 12px 15px; display: flex; align-items: center; gap: 10px; }
+        .output-symbol { font-family: 'Times New Roman', Times, serif; font-size: 18px; font-weight: bold; font-style: italic; background: #fff; color: #004080; padding: 4px 10px; border-radius: 4px; }
+        .output-name { font-size: 14px; font-weight: 700; }
+        .output-body { padding: 15px; font-size: 13px; line-height: 1.6; }
+        .output-body p { margin-bottom: 8px; }
+        .output-body ul { margin: 8px 0; padding-left: 20px; }
+        .output-body li { margin-bottom: 4px; }
+        .output-body code { background: #e7f3ff; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+        .page-footer { background-color: #004080; color: #ffffff; padding: 20px 30px; text-align: center; font-size: 13px; line-height: 1.7; font-weight: 500; border-radius: 0 0 8px 8px; }
+        .page-footer p { margin: 6px 0 0; font-size: 12px; color: #ffffff; }
+        .interpretation { background: #d4edda; border: 2px solid #28a745; border-radius: 6px; padding: 15px; margin-top: 15px; }
+        .interpretation.warning { background: #fff3cd; border-color: #ffc107; }
+        .interpretation.not-sig { background: #fff3cd; border-color: #ffc107; }
+        .interpretation h4 { margin-bottom: 10px; font-size: 16px; color: #004080; }
+        .tab-container { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid #004080; flex-wrap: wrap; }
+        .tab-btn { padding: 12px 24px; background: #edf2f7; border: 2px solid #004080; border-bottom: none; border-radius: 6px 6px 0 0; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; margin-right: -2px; color: #4a5568; }
+        .tab-btn.active { background: #004080; color: #ffffff; }
+        .tab-btn:hover:not(.active) { background: #cbd5e0; }
+        .tab-content { display: none; padding: 20px; border: 2px solid #004080; border-top: none; border-radius: 0 0 6px 6px; background: #ffffff; }
+        .tab-content.active { display: block; }
+        .mode-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .mode-card { background: #f8f9fa; border: 3px solid #004080; border-radius: 10px; padding: 20px; cursor: pointer; text-align: center; transition: all 0.3s ease; }
+        .mode-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,64,128,0.2); }
+        .mode-card.active { background: #004080; color: #fff; }
+        .mode-card.active h4 { color: #fff; }
+        .mode-card.active p { color: #e0e0e0; }
+        .mode-card h4 { color: #004080; font-size: 15px; margin-bottom: 8px; font-weight: 700; }
+        .mode-card p { font-size: 12px; color: #666; line-height: 1.5; }
+        .mode-card .mode-icon { font-size: 32px; margin-bottom: 10px; }
+        .manual-entry { background: #f0f7ff; border: 2px solid #004080; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .manual-entry h4 { color: #004080; margin-bottom: 15px; font-size: 16px; }
+        .contingency-grid { display: grid; grid-template-columns: auto 1fr 1fr auto; gap: 0; margin: 15px 0; border: 2px solid #004080; border-radius: 8px; overflow: hidden; }
+        .contingency-grid .cell { padding: 12px; text-align: center; border: 1px solid #e2e8f0; }
+        .contingency-grid .header { background: #004080; color: #fff; font-weight: 700; font-size: 13px; }
+        .contingency-grid .row-header { background: #e7f3ff; font-weight: 700; color: #004080; font-size: 13px; }
+        .contingency-grid .cell input { width: 80px; padding: 10px; border: 2px solid #004080; border-radius: 4px; text-align: center; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 16px; }
+        .contingency-grid .total { background: #ebf4ff; font-weight: 700; color: #004080; }
+        .hr-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 12px; }
+        .hr-risk { background: #f8d7da; color: #721c24; }
+        .hr-neutral { background: #e2e8f0; color: #4a5568; }
+        .hr-protect { background: #d4edda; color: #155724; }
+        .strata-container { margin: 15px 0; }
+        .stratum-card { background: #f0f7ff; border: 2px solid #004080; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .stratum-card h5 { color: #004080; margin-bottom: 10px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f7fafc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #004080; border-radius: 4px; }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .content-inner { padding: 15px; }
+            .page-header h1 { font-size: 20px; }
+            .form-row, .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .mode-selector { grid-template-columns: 1fr; }
+            .contingency-grid { grid-template-columns: auto 1fr 1fr auto; }
+            .btn { padding: 12px 20px; font-size: 13px; }
+            .tab-btn { padding: 10px 16px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="logo-row">
+                <div class="logo-box">
+                    <img src="https://github.com/mohamedsillahkanu/gdp-dashboard-2/raw/6c7463b0d5c3be150aafae695a4bcbbd8aeb1499/ICF-SL.jpg" alt="ICF-SL Logo">
+                </div>
+            </div>
+            <h3>Informatics Consultancy Firm-Sierra Leone<br>(ICF-SL)</h3>
+            <p class="tagline"><em>Driving Data-Driven Solutions for Health and Development</em></p>
+            <h1>ODDS RATIO ANALYSIS SUITE</h1>
+            <p class="subtitle">Crude OR · Mantel-Haenszel Stratified OR · Logistic Regression OR</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-inner">
+                <div id="alertContainer"></div>
+
+                <!-- About Section -->
+                <div class="section-header">
+                    <span class="section-icon">?</span>
+                    <span class="section-title">ABOUT THIS ANALYSIS</span>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>What is an Odds Ratio?</h4>
+                        <p style="font-size: 14px; line-height: 1.7;">The Odds Ratio (OR) quantifies the strength of association between an exposure and an outcome. An OR of 1 indicates no association; OR > 1 suggests increased odds of the outcome with exposure; OR < 1 suggests decreased odds (protective effect). It is widely used in epidemiology, clinical research, and public health.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Three Types Available</h4>
+                        <ul>
+                            <li><strong>Crude OR (2×2 Table):</strong> Simple association between one exposure and one outcome</li>
+                            <li><strong>Mantel-Haenszel OR:</strong> Adjusted OR controlling for a confounding variable across strata</li>
+                            <li><strong>Logistic Regression OR:</strong> Adjusted ORs from multivariable binary logistic regression with multiple covariates</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>When to Use</h4>
+                        <ul>
+                            <li>Case-control studies (primary measure)</li>
+                            <li>Cross-sectional surveys with binary outcomes</li>
+                            <li>Malaria risk factor analysis</li>
+                            <li>Treatment effectiveness with binary endpoints</li>
+                            <li>Disease association with exposure variables</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Formula Section -->
+                <div class="section-header">
+                    <span class="section-icon">∑</span>
+                    <span class="section-title">MATHEMATICAL FRAMEWORK</span>
+                </div>
+
+                <div class="formula-container">
+                    <div class="formula-box">
+                        <h4>Crude Odds Ratio (2×2 Table)</h4>
+                        <div class="formula">OR = (a × d) / (b × c)</div>
+                        <p class="formula-note">Where a = exposed cases, b = exposed non-cases, c = unexposed cases, d = unexposed non-cases</p>
+                    </div>
+
+                    <div class="formula-box">
+                        <h4>Mantel-Haenszel Odds Ratio</h4>
+                        <div class="formula formula-small">OR<sub>MH</sub> = Σ(a<sub>i</sub>d<sub>i</sub>/n<sub>i</sub>) / Σ(b<sub>i</sub>c<sub>i</sub>/n<sub>i</sub>)</div>
+                        <p class="formula-note">Pooled OR across K strata, adjusting for the confounding variable.<br>i = 1, 2, ..., K strata; n<sub>i</sub> = total in stratum i</p>
+                    </div>
+
+                    <div class="formula-box">
+                        <h4>Logistic Regression Odds Ratio</h4>
+                        <div class="formula formula-small">log(p / (1−p)) = β₀ + β₁X₁ + β₂X₂ + ... + βₖXₖ</div>
+                        <p class="formula-note">OR for each covariate = exp(β). The logit link function models the log-odds as a linear combination of predictors.</p>
+                    </div>
+
+                    <div class="parameters-grid">
+                        <div class="parameter-card">
+                            <div class="param-symbol">OR</div>
+                            <div class="param-name">Odds Ratio</div>
+                            <div class="param-desc"><strong>OR = 1:</strong> No association. <strong>OR > 1:</strong> Exposure increases odds (risk factor). <strong>OR < 1:</strong> Exposure decreases odds (protective). <strong>OR = 2.0:</strong> Exposed group has twice the odds. <strong>OR = 0.5:</strong> Exposed group has half the odds.</div>
+                        </div>
+                        <div class="parameter-card">
+                            <div class="param-symbol">95% CI</div>
+                            <div class="param-name">Confidence Interval</div>
+                            <div class="param-desc">Range of plausible values for the true OR. If the CI includes 1.0, the association is not statistically significant. Calculated using: exp(ln(OR) ± 1.96 × SE(ln(OR))). Narrow CI = precise estimate; Wide CI = need more data.</div>
+                        </div>
+                        <div class="parameter-card">
+                            <div class="param-symbol">χ²</div>
+                            <div class="param-name">Chi-Square Test</div>
+                            <div class="param-desc">Tests whether the association between exposure and outcome is statistically significant. Uses Pearson's chi-square or Yates' continuity correction for small samples. If p < 0.05, reject independence.</div>
+                        </div>
+                        <div class="parameter-card">
+                            <div class="param-symbol">p</div>
+                            <div class="param-name">Fisher's Exact Test</div>
+                            <div class="param-desc">Exact test for small samples where chi-square may be unreliable (any expected cell < 5). Calculates exact probability under the null hypothesis of no association. Preferred when sample is small.</div>
+                        </div>
+                        <div class="parameter-card">
+                            <div class="param-symbol">β</div>
+                            <div class="param-name">Log-Odds (Logistic Reg.)</div>
+                            <div class="param-desc">The regression coefficient in logistic regression. OR = exp(β). β > 0 means increased odds; β < 0 means decreased odds; β = 0 means no effect. Standard error of β used to compute CI and Wald test.</div>
+                        </div>
+                        <div class="parameter-card">
+                            <div class="param-symbol">OR<sub>MH</sub></div>
+                            <div class="param-name">Mantel-Haenszel OR</div>
+                            <div class="param-desc">Weighted average of stratum-specific ORs that adjusts for confounding. Assumes homogeneity of ORs across strata (tested by Breslow-Day test). More efficient than crude OR when confounding is present.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Understanding Output -->
+                <div class="section-header">
+                    <span class="section-icon">📊</span>
+                    <span class="section-title">UNDERSTANDING YOUR RESULTS</span>
+                </div>
+
+                <div class="output-explanation">
+                    <h4 style="color: #004080; margin-bottom: 15px;">Output Parameters Explained</h4>
+                    <div class="output-grid">
+                        <div class="output-card highlight-card">
+                            <div class="output-header">
+                                <span class="output-symbol">OR</span>
+                                <span class="output-name">Odds Ratio (Key Metric)</span>
+                            </div>
+                            <div class="output-body">
+                                <p><strong>Interpretation Guide:</strong></p>
+                                <ul>
+                                    <li><strong>OR = 1.0:</strong> No association — exposure doesn't affect odds</li>
+                                    <li><strong>OR = 1.5:</strong> 50% higher odds with exposure</li>
+                                    <li><strong>OR = 2.0:</strong> 2× the odds (doubled risk)</li>
+                                    <li><strong>OR = 3.0:</strong> 3× the odds (tripled risk)</li>
+                                    <li><strong>OR = 0.5:</strong> 50% lower odds (protective)</li>
+                                    <li><strong>OR = 0.25:</strong> 75% lower odds (strongly protective)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="output-card">
+                            <div class="output-header">
+                                <span class="output-symbol">χ²</span>
+                                <span class="output-name">Pearson Chi-Square</span>
+                            </div>
+                            <div class="output-body">
+                                <p><strong>What it is:</strong> Tests independence between exposure and outcome</p>
+                                <p><strong>Assumptions:</strong></p>
+                                <ul>
+                                    <li>All expected frequencies ≥ 5 (use Fisher's exact if not)</li>
+                                    <li>Independent observations</li>
+                                </ul>
+                                <p><strong>Decision:</strong> p < 0.05 → significant association</p>
+                            </div>
+                        </div>
+                        <div class="output-card">
+                            <div class="output-header">
+                                <span class="output-symbol">RR</span>
+                                <span class="output-name">Risk Ratio (Bonus)</span>
+                            </div>
+                            <div class="output-body">
+                                <p><strong>What it is:</strong> Ratio of risk in exposed vs unexposed</p>
+                                <p><strong>Formula:</strong> RR = [a/(a+b)] / [c/(c+d)]</p>
+                                <p><strong>When to use:</strong> Cohort studies and RCTs (prospective)</p>
+                                <p><strong>Note:</strong> OR ≈ RR when outcome is rare (< 10%)</p>
+                            </div>
+                        </div>
+                        <div class="output-card">
+                            <div class="output-header">
+                                <span class="output-symbol">BD</span>
+                                <span class="output-name">Breslow-Day Test</span>
+                            </div>
+                            <div class="output-body">
+                                <p><strong>What it is:</strong> Tests homogeneity of ORs across strata</p>
+                                <p><strong>H₀:</strong> ORs are equal across all strata</p>
+                                <p><strong>If p > 0.05:</strong> ORs are homogeneous → MH OR is valid</p>
+                                <p><strong>If p < 0.05:</strong> ORs differ across strata → report stratum-specific ORs or consider interaction</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Mode Selection -->
+                <div class="section-header">
+                    <span class="section-icon">1</span>
+                    <span class="section-title">SELECT ANALYSIS TYPE</span>
+                </div>
+
+                <div class="mode-selector">
+                    <div class="mode-card active" id="modeCard1" onclick="selectMode(1)">
+                        <div class="mode-icon">📋</div>
+                        <h4>Crude OR (2×2 Table)</h4>
+                        <p>Simple odds ratio from a single 2×2 contingency table. Manual entry or from uploaded data.</p>
+                    </div>
+                    <div class="mode-card" id="modeCard2" onclick="selectMode(2)">
+                        <div class="mode-icon">📊</div>
+                        <h4>Mantel-Haenszel OR</h4>
+                        <p>Stratified analysis adjusting for a confounding variable. Upload dataset required.</p>
+                    </div>
+                    <div class="mode-card" id="modeCard3" onclick="selectMode(3)">
+                        <div class="mode-icon">📈</div>
+                        <h4>Logistic Regression OR</h4>
+                        <p>Multivariable adjusted ORs from binary logistic regression. Upload dataset required.</p>
+                    </div>
+                </div>
+
+                <!-- ==================== MODE 1: CRUDE OR ==================== -->
+                <div id="mode1Section">
+                    <div class="section-header" style="margin-top: 20px;">
+                        <span class="section-icon">A</span>
+                        <span class="section-title">CRUDE ODDS RATIO — 2×2 TABLE</span>
+                    </div>
+
+                    <!-- Tab: Manual vs Upload -->
+                    <div class="tab-container" id="mode1Tabs">
+                        <button class="tab-btn active" onclick="showMode1Tab('manualEntry')">Manual Entry</button>
+                        <button class="tab-btn" onclick="showMode1Tab('fileUpload')">Upload Data</button>
+                    </div>
+
+                    <div id="manualEntry" class="tab-content active">
+                        <div class="manual-entry">
+                            <h4>Enter 2×2 Table Values</h4>
+                            <div style="overflow-x:auto;">
+                                <table class="data-table" style="max-width: 500px; margin: 15px auto;">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Outcome (+)</th>
+                                            <th>Outcome (−)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="font-weight:700; background:#e7f3ff; color:#004080;">Exposed (+)</td>
+                                            <td><input type="number" id="cellA" placeholder="a" min="0" value=""></td>
+                                            <td><input type="number" id="cellB" placeholder="b" min="0" value=""></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight:700; background:#e7f3ff; color:#004080;">Unexposed (−)</td>
+                                            <td><input type="number" id="cellC" placeholder="c" min="0" value=""></td>
+                                            <td><input type="number" id="cellD" placeholder="d" min="0" value=""></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-row" style="max-width: 500px; margin: 15px auto;">
+                                <div class="form-group">
+                                    <label class="form-label">Exposure Label</label>
+                                    <input type="text" id="exposureLabel" class="form-input" placeholder="e.g., ITN Use" value="Exposed">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Outcome Label</label>
+                                    <input type="text" id="outcomeLabel" class="form-input" placeholder="e.g., Malaria Case" value="Outcome">
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <button class="btn btn-success" onclick="runCrudeOR_Manual()">🔬 CALCULATE CRUDE OR</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="fileUpload" class="tab-content">
+                        <div class="upload-section" id="uploadArea1" ondragover="handleDragOver(event, 'uploadArea1')" ondragleave="handleDragLeave(event, 'uploadArea1')" ondrop="handleDrop(event, 1)">
+                            <h3>📂 Upload Dataset</h3>
+                            <p>Drag and drop or click to browse (CSV / Excel)</p>
+                            <label class="file-input-wrapper">
+                                📁 Choose File
+                                <input type="file" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(event, 1)">
+                            </label>
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-secondary btn-sm" onclick="downloadSampleData(1)">📥 Download Sample Data</button>
+                            </div>
+                            <div id="fileStatus1" class="file-status"></div>
+                        </div>
+                        <div id="crudeConfig" class="config-card hidden">
+                            <h4>⚙️ Configure Variables</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Exposure Variable (Binary)</label>
+                                    <select id="crudeExposure" class="form-select"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Outcome Variable (Binary)</label>
+                                    <select id="crudeOutcome" class="form-select"></select>
+                                </div>
+                            </div>
+                            <button class="btn btn-success" onclick="runCrudeOR_Data()">🔬 CALCULATE CRUDE OR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== MODE 2: MANTEL-HAENSZEL ==================== -->
+                <div id="mode2Section" class="hidden">
+                    <div class="section-header" style="margin-top: 20px;">
+                        <span class="section-icon">B</span>
+                        <span class="section-title">MANTEL-HAENSZEL STRATIFIED ODDS RATIO</span>
+                    </div>
+
+                    <div class="upload-section" id="uploadArea2" ondragover="handleDragOver(event, 'uploadArea2')" ondragleave="handleDragLeave(event, 'uploadArea2')" ondrop="handleDrop(event, 2)">
+                        <h3>📂 Upload Dataset</h3>
+                        <p>Data must include: exposure (binary), outcome (binary), and stratifying variable</p>
+                        <label class="file-input-wrapper">
+                            📁 Choose File
+                            <input type="file" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(event, 2)">
+                        </label>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-secondary btn-sm" onclick="downloadSampleData(2)">📥 Download Sample Data</button>
+                        </div>
+                        <div id="fileStatus2" class="file-status"></div>
+                    </div>
+                    <div id="mhConfig" class="config-card hidden">
+                        <h4>⚙️ Configure Variables</h4>
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label class="form-label">Exposure Variable (Binary)</label>
+                                <select id="mhExposure" class="form-select"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Outcome Variable (Binary)</label>
+                                <select id="mhOutcome" class="form-select"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Stratifying Variable</label>
+                                <select id="mhStrata" class="form-select"></select>
+                            </div>
+                        </div>
+                        <button class="btn btn-success" onclick="runMHAnalysis()">🔬 RUN MANTEL-HAENSZEL ANALYSIS</button>
+                    </div>
+                </div>
+
+                <!-- ==================== MODE 3: LOGISTIC REGRESSION ==================== -->
+                <div id="mode3Section" class="hidden">
+                    <div class="section-header" style="margin-top: 20px;">
+                        <span class="section-icon">C</span>
+                        <span class="section-title">LOGISTIC REGRESSION ODDS RATIOS</span>
+                    </div>
+
+                    <div class="upload-section" id="uploadArea3" ondragover="handleDragOver(event, 'uploadArea3')" ondragleave="handleDragLeave(event, 'uploadArea3')" ondrop="handleDrop(event, 3)">
+                        <h3>📂 Upload Dataset</h3>
+                        <p>Data must include a binary outcome variable (0/1) and one or more predictor variables</p>
+                        <label class="file-input-wrapper">
+                            📁 Choose File
+                            <input type="file" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(event, 3)">
+                        </label>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-secondary btn-sm" onclick="downloadSampleData(3)">📥 Download Sample Data</button>
+                        </div>
+                        <div id="fileStatus3" class="file-status"></div>
+                    </div>
+                    <div id="logConfig" class="config-card hidden">
+                        <h4>⚙️ Configure Variables</h4>
+                        <div class="form-group">
+                            <label class="form-label">Outcome Variable (Binary 0/1)</label>
+                            <select id="logOutcome" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Select Predictor Variables (Click to Add)</label>
+                            <div id="logAvailablePredictors" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Selected Predictors</label>
+                            <div id="logSelectedPredictors" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; padding: 10px; background: #fff; border: 2px dashed #004080; border-radius: 6px;"></div>
+                        </div>
+                        <button class="btn btn-success" onclick="runLogisticRegression()">🔬 RUN LOGISTIC REGRESSION</button>
+                    </div>
+                </div>
+
+                <!-- ==================== RESULTS ==================== -->
+                <div id="resultsSection" class="hidden">
+                    <div class="section-header">
+                        <span class="section-icon">✓</span>
+                        <span class="section-title">ANALYSIS RESULTS</span>
+                    </div>
+
+                    <div class="stats-grid" id="quickStats"></div>
+
+                    <div id="interpretation" class="interpretation">
+                        <h4>📋 Key Findings</h4>
+                        <div id="interpretationText"></div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div class="tab-container" id="resultTabs"></div>
+                        <div id="resultTabContents"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="page-footer">
+            Informatics Consultancy Firm-Sierra Leone (ICF-SL)
+            <p><em>Driving Data-Driven Solutions for Health and Development</em></p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GLOBALS
+        // ============================================
+        let currentMode = 1;
+        let datasets = { 1: null, 2: null, 3: null };
+        let columns = { 1: [], 2: [], 3: [] };
+        let logPredictors = [];
+
+        // ============================================
+        // UTILITY
+        // ============================================
+        function showAlert(msg, type) {
+            const c = document.getElementById('alertContainer');
+            c.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+            setTimeout(() => c.innerHTML = '', 5000);
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            [1,2,3].forEach(m => {
+                document.getElementById(`modeCard${m}`).classList.toggle('active', m === mode);
+                document.getElementById(`mode${m}Section`).classList.toggle('hidden', m !== mode);
+            });
+            document.getElementById('resultsSection').classList.add('hidden');
+        }
+
+        function showMode1Tab(tabId) {
+            document.querySelectorAll('#mode1Tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#mode1Section > .tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showResultTab(tabId) {
+            document.querySelectorAll('#resultTabs .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.result-tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ============================================
+        // STATISTICS
+        // ============================================
+        function normalCDF(x) {
+            const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+            const sign = x<0?-1:1;
+            x = Math.abs(x);
+            const t = 1/(1+p*x);
+            const y = 1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+            return 0.5*(1+sign*y);
+        }
+
+        function chiSquarePValue(x, df) {
+            if (x<=0) return 1;
+            const z = Math.pow(x/df, 1/3) - (1-2/(9*df));
+            const se = Math.sqrt(2/(9*df));
+            return 1-normalCDF(z/se);
+        }
+
+        function computeCrudeOR(a, b, c, d) {
+            const n = a+b+c+d;
+            const or = (a*d) / (b*c);
+            const lnOR = Math.log(or);
+            const seLnOR = Math.sqrt(1/a + 1/b + 1/c + 1/d);
+
+            // 95% CI
+            const ciLower = Math.exp(lnOR - 1.96 * seLnOR);
+            const ciUpper = Math.exp(lnOR + 1.96 * seLnOR);
+
+            // Chi-square (Pearson)
+            const r1 = a+b, r2 = c+d, c1 = a+c, c2 = b+d;
+            const e11 = r1*c1/n, e12 = r1*c2/n, e21 = r2*c1/n, e22 = r2*c2/n;
+            const chi2 = Math.pow(a-e11,2)/e11 + Math.pow(b-e12,2)/e12 + Math.pow(c-e21,2)/e21 + Math.pow(d-e22,2)/e22;
+            const chi2P = chiSquarePValue(chi2, 1);
+
+            // Yates corrected chi-square
+            const chi2Yates = Math.pow(Math.abs(a*d-b*c)-n/2, 2)*n / (r1*r2*c1*c2);
+            const chi2YatesP = chiSquarePValue(chi2Yates, 1);
+
+            // Fisher's exact test (approximation for large values)
+            let fisherP = fisherExact(a,b,c,d);
+
+            // Risk Ratio
+            const rr = (a/(a+b)) / (c/(c+d));
+            const lnRR = Math.log(rr);
+            const seLnRR = Math.sqrt(1/a - 1/(a+b) + 1/c - 1/(c+d));
+            const rrCILower = Math.exp(lnRR - 1.96*seLnRR);
+            const rrCIUpper = Math.exp(lnRR + 1.96*seLnRR);
+
+            // Risk Difference
+            const p1 = a/(a+b), p2 = c/(c+d);
+            const rd = p1 - p2;
+            const seRD = Math.sqrt(p1*(1-p1)/(a+b) + p2*(1-p2)/(c+d));
+            const rdCILower = rd - 1.96*seRD;
+            const rdCIUpper = rd + 1.96*seRD;
+
+            // Min expected cell
+            const minExpected = Math.min(e11, e12, e21, e22);
+
+            return {
+                a,b,c,d,n,or,lnOR,seLnOR,ciLower,ciUpper,
+                chi2,chi2P,chi2Yates,chi2YatesP,fisherP,
+                rr,rrCILower,rrCIUpper,rd,rdCILower,rdCIUpper,
+                minExpected, e11, e12, e21, e22,
+                p1, p2
+            };
+        }
+
+        function fisherExact(a,b,c,d) {
+            // Hypergeometric probability
+            const n = a+b+c+d;
+            const r1=a+b, r2=c+d, c1=a+c, c2=b+d;
+
+            function logFactorial(n) {
+                if (n<=1) return 0;
+                let s = 0;
+                for (let i=2; i<=n; i++) s += Math.log(i);
+                return s;
+            }
+
+            function hyperProb(x) {
+                return Math.exp(
+                    logFactorial(r1)+logFactorial(r2)+logFactorial(c1)+logFactorial(c2)
+                    -logFactorial(n)-logFactorial(x)-logFactorial(r1-x)-logFactorial(c1-x)-logFactorial(r2-c1+x)
+                );
+            }
+
+            const minA = Math.max(0, c1-r2);
+            const maxA = Math.min(r1, c1);
+            const pObs = hyperProb(a);
+            let pValue = 0;
+            for (let x=minA; x<=maxA; x++) {
+                const px = hyperProb(x);
+                if (px <= pObs + 1e-10) pValue += px;
+            }
+            return Math.min(1, pValue);
+        }
+
+        // ============================================
+        // FILE HANDLING
+        // ============================================
+        function handleDragOver(e, areaId) {
+            e.preventDefault();
+            if (areaId) document.getElementById(areaId).classList.add('drag-over');
+        }
+        function handleDragLeave(e, areaId) {
+            e.preventDefault();
+            if (areaId) document.getElementById(areaId).classList.remove('drag-over');
+        }
+        function handleDrop(e, mode) {
+            e.preventDefault();
+            document.getElementById(`uploadArea${mode}`).classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) parseFile(file, mode);
+        }
+        function handleFileUpload(e, mode) {
+            const file = e.target.files[0];
+            if (file) parseFile(file, mode);
+        }
+
+        function parseFile(file, mode) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'csv') {
+                Papa.parse(file, {
+                    header: true, dynamicTyping: true, skipEmptyLines: true,
+                    complete: r => { datasets[mode] = r.data; columns[mode] = r.meta.fields||[]; onDataLoaded(file.name, mode); },
+                    error: () => showAlert('Error parsing CSV', 'error')
+                });
+            } else {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const wb = XLSX.read(e.target.result, {type:'array'});
+                        const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:null});
+                        datasets[mode] = data; columns[mode] = Object.keys(data[0]||{});
+                        onDataLoaded(file.name, mode);
+                    } catch(err) { showAlert('Error parsing Excel','error'); }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function onDataLoaded(fname, mode) {
+            const status = document.getElementById(`fileStatus${mode}`);
+            const area = document.getElementById(`uploadArea${mode}`);
+            status.innerHTML = `✅ <strong>${fname}</strong> (${datasets[mode].length} rows × ${columns[mode].length} cols)`;
+            status.className = 'file-status loaded';
+            area.classList.add('loaded');
+
+            const cols = columns[mode];
+            if (mode === 1) {
+                populateSelect('crudeExposure', cols);
+                populateSelect('crudeOutcome', cols);
+                document.getElementById('crudeConfig').classList.remove('hidden');
+            } else if (mode === 2) {
+                populateSelect('mhExposure', cols);
+                populateSelect('mhOutcome', cols);
+                populateSelect('mhStrata', cols);
+                document.getElementById('mhConfig').classList.remove('hidden');
+            } else if (mode === 3) {
+                populateSelect('logOutcome', cols);
+                logPredictors = [];
+                renderLogPredictors(cols);
+                document.getElementById('logConfig').classList.remove('hidden');
+            }
+        }
+
+        function populateSelect(id, cols) {
+            const sel = document.getElementById(id);
+            sel.innerHTML = '<option value="">-- Select --</option>';
+            cols.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        function renderLogPredictors(cols) {
+            const container = document.getElementById('logAvailablePredictors');
+            container.innerHTML = '';
+            cols.forEach(c => {
+                const tag = document.createElement('span');
+                tag.className = 'btn btn-sm btn-secondary';
+                tag.style.margin = '2px';
+                tag.textContent = c;
+                tag.style.cursor = 'pointer';
+                tag.onclick = () => addLogPredictor(c);
+                container.appendChild(tag);
+            });
+        }
+
+        function addLogPredictor(col) {
+            if (logPredictors.includes(col)) return;
+            logPredictors.push(col);
+            renderSelectedPredictors();
+        }
+
+        function removeLogPredictor(col) {
+            logPredictors = logPredictors.filter(c => c !== col);
+            renderSelectedPredictors();
+        }
+
+        function renderSelectedPredictors() {
+            const container = document.getElementById('logSelectedPredictors');
+            container.innerHTML = '';
+            logPredictors.forEach(c => {
+                // Check if categorical
+                const vals = datasets[3].map(r => r[c]).filter(v => v !== null && v !== '');
+                const isCat = vals.some(v => isNaN(v));
+                const cls = isCat ? 'categorical' : '';
+                container.innerHTML += `<span class="covariate-tag ${cls}">${c}${isCat?' (cat)':''} <button class="remove-btn" onclick="removeLogPredictor('${c}')">×</button></span>`;
+            });
+        }
+
+        // ============================================
+        // MODE 1: CRUDE OR
+        // ============================================
+        function runCrudeOR_Manual() {
+            const a=parseInt(document.getElementById('cellA').value);
+            const b=parseInt(document.getElementById('cellB').value);
+            const c=parseInt(document.getElementById('cellC').value);
+            const d=parseInt(document.getElementById('cellD').value);
+
+            if ([a,b,c,d].some(v => isNaN(v) || v < 0)) {
+                showAlert('Please enter valid non-negative integers for all cells.', 'error');
+                return;
+            }
+            if (a*b*c*d === 0 && (a===0||b===0||c===0||d===0)) {
+                // Add 0.5 correction
+                showAlert('Zero cell detected. Using 0.5 continuity correction.', 'warning');
+            }
+            const expLabel = document.getElementById('exposureLabel').value || 'Exposed';
+            const outLabel = document.getElementById('outcomeLabel').value || 'Outcome';
+
+            let aa=a, bb=b, cc=c, dd=d;
+            if (a===0||b===0||c===0||d===0) { aa+=0.5; bb+=0.5; cc+=0.5; dd+=0.5; }
+            const result = computeCrudeOR(aa,bb,cc,dd);
+            result.origA=a; result.origB=b; result.origC=c; result.origD=d;
+            result.correction = (a===0||b===0||c===0||d===0);
+            displayCrudeResults(result, expLabel, outLabel);
+        }
+
+        function runCrudeOR_Data() {
+            const expVar = document.getElementById('crudeExposure').value;
+            const outVar = document.getElementById('crudeOutcome').value;
+            if (!expVar || !outVar) { showAlert('Select both variables.', 'error'); return; }
+
+            const data = datasets[1];
+            const expVals = [...new Set(data.map(r => r[expVar]).filter(v => v!==null && v!==''))].sort();
+            const outVals = [...new Set(data.map(r => r[outVar]).filter(v => v!==null && v!==''))].sort();
+
+            if (expVals.length !== 2 || outVals.length !== 2) {
+                showAlert(`Both variables must be binary. ${expVar} has ${expVals.length} levels, ${outVar} has ${outVals.length} levels.`, 'error');
+                return;
+            }
+
+            // Build 2x2: exposure[1]=exposed, outcome[1]=case
+            const expPos = expVals[1], expNeg = expVals[0];
+            const outPos = outVals[1], outNeg = outVals[0];
+            let a=0,b=0,c=0,d=0;
+            data.forEach(r => {
+                const e = r[expVar], o = r[outVar];
+                if (e===expPos && o===outPos) a++;
+                else if (e===expPos && o===outNeg) b++;
+                else if (e===expNeg && o===outPos) c++;
+                else if (e===expNeg && o===outNeg) d++;
+            });
+
+            let aa=a,bb=b,cc=c,dd=d;
+            if (a===0||b===0||c===0||d===0) { aa+=0.5;bb+=0.5;cc+=0.5;dd+=0.5; }
+            const result = computeCrudeOR(aa,bb,cc,dd);
+            result.origA=a;result.origB=b;result.origC=c;result.origD=d;
+            result.correction=(a===0||b===0||c===0||d===0);
+            result.expLevels = [expNeg, expPos];
+            result.outLevels = [outNeg, outPos];
+            displayCrudeResults(result, `${expVar} (${expPos})`, `${outVar} (${outPos})`);
+        }
+
+        function displayCrudeResults(r, expLabel, outLabel) {
+            document.getElementById('resultsSection').classList.remove('hidden');
+            const sig = r.chi2P < 0.05;
+
+            // Quick stats
+            document.getElementById('quickStats').innerHTML = `
+                <div class="stats-card"><h4>Total N</h4><div class="metric-value">${r.origA+r.origB+r.origC+r.origD}</div><p>Observations</p></div>
+                <div class="stats-card"><h4>Odds Ratio</h4><div class="metric-value ${r.or>1?'danger':'success'}">${r.or.toFixed(3)}</div><p>${r.or>1?'Risk Factor':'Protective'}</p></div>
+                <div class="stats-card"><h4>95% CI</h4><div class="metric-value" style="font-size:1.1rem;">[${r.ciLower.toFixed(3)}, ${r.ciUpper.toFixed(3)}]</div><p>${r.ciLower>1||r.ciUpper<1?'Excludes 1':'Includes 1'}</p></div>
+                <div class="stats-card"><h4>Chi-Square</h4><div class="metric-value">${r.chi2.toFixed(3)}</div><p>p = ${r.chi2P<0.0001?'< 0.0001':r.chi2P.toFixed(4)}</p></div>
+                <div class="stats-card"><h4>Fisher's Exact p</h4><div class="metric-value ${sig?'success':'warning'}">${r.fisherP<0.0001?'< 0.0001':r.fisherP.toFixed(4)}</div><p>${sig?'Significant':'Not Significant'}</p></div>
+                <div class="stats-card"><h4>Risk Ratio</h4><div class="metric-value">${r.rr.toFixed(3)}</div><p>[${r.rrCILower.toFixed(3)}, ${r.rrCIUpper.toFixed(3)}]</p></div>
+            `;
+
+            // Interpretation
+            let interp = `<p style="font-size:14px; line-height:1.8;">`;
+            interp += `<strong>Exposure:</strong> ${expLabel} | <strong>Outcome:</strong> ${outLabel}<br>`;
+            interp += `<strong>Odds Ratio:</strong> ${r.or.toFixed(3)} (95% CI: ${r.ciLower.toFixed(3)} – ${r.ciUpper.toFixed(3)})<br>`;
+            if (sig) {
+                interp += `<strong>Decision:</strong> There is a statistically significant association (χ² = ${r.chi2.toFixed(3)}, p = ${r.chi2P<0.0001?'< 0.0001':r.chi2P.toFixed(4)}).<br>`;
+                interp += r.or > 1
+                    ? `The exposed group has <strong>${((r.or-1)*100).toFixed(1)}% higher odds</strong> of the outcome compared to the unexposed group.`
+                    : `The exposed group has <strong>${((1-r.or)*100).toFixed(1)}% lower odds</strong> of the outcome (protective effect).`;
+            } else {
+                interp += `<strong>Decision:</strong> No statistically significant association was found (p = ${r.chi2P.toFixed(4)}). The confidence interval includes 1.`;
+            }
+            if (r.minExpected < 5) interp += `<br><strong>⚠️ Note:</strong> Minimum expected cell count = ${r.minExpected.toFixed(1)} (< 5). Fisher's exact test (p = ${r.fisherP<0.0001?'< 0.0001':r.fisherP.toFixed(4)}) is preferred.`;
+            if (r.correction) interp += `<br><strong>Note:</strong> 0.5 continuity correction applied due to zero cell(s).`;
+            interp += '</p>';
+            document.getElementById('interpretationText').innerHTML = interp;
+            document.getElementById('interpretation').className = sig ? 'interpretation' : 'interpretation not-sig';
+
+            // Result tabs
+            const tabsHtml = `
+                <button class="tab-btn active" onclick="showResultTab('rt_table')">2×2 Table</button>
+                <button class="tab-btn" onclick="showResultTab('rt_forest')">Forest Plot</button>
+                <button class="tab-btn" onclick="showResultTab('rt_pub')">Publication Tables</button>
+            `;
+            document.getElementById('resultTabs').innerHTML = tabsHtml;
+
+            let contentsHtml = `
+                <div id="rt_table" class="tab-content result-tab-content active">
+                    <div class="result-title">📋 Contingency Table</div>
+                    <table class="data-table" style="max-width:600px;">
+                        <thead><tr><th></th><th>${outLabel} (+)</th><th>${outLabel} (−)</th><th>Total</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-weight:700;background:#e7f3ff;color:#004080;">${expLabel} (+)</td><td>${r.origA}</td><td>${r.origB}</td><td style="font-weight:700;">${r.origA+r.origB}</td></tr>
+                            <tr><td style="font-weight:700;background:#e7f3ff;color:#004080;">Unexposed (−)</td><td>${r.origC}</td><td>${r.origD}</td><td style="font-weight:700;">${r.origC+r.origD}</td></tr>
+                            <tr class="total-row"><td style="font-weight:700;">Total</td><td>${r.origA+r.origC}</td><td>${r.origB+r.origD}</td><td>${r.origA+r.origB+r.origC+r.origD}</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="result-title" style="margin-top:20px;">📊 Expected Frequencies</div>
+                    <table class="data-table" style="max-width:500px;">
+                        <thead><tr><th></th><th>Outcome (+)</th><th>Outcome (−)</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-weight:700;">Exposed (+)</td><td>${r.e11.toFixed(1)}</td><td>${r.e12.toFixed(1)}</td></tr>
+                            <tr><td style="font-weight:700;">Unexposed (−)</td><td>${r.e21.toFixed(1)}</td><td>${r.e22.toFixed(1)}</td></tr>
+                        </tbody>
+                    </table>
+                    ${r.minExpected<5?'<div class="alert alert-warning">⚠️ Minimum expected cell = '+r.minExpected.toFixed(1)+' (< 5). Use Fisher\'s exact test.</div>':''}
+                </div>
+                <div id="rt_forest" class="tab-content result-tab-content">
+                    <div class="result-title">🌲 Forest Plot — OR and RR</div>
+                    <div class="chart-container" id="crudeForestChart"></div>
+                    <div class="button-row">
+                        <button class="btn btn-gold btn-sm" onclick="exportChart('crudeForestChart','png')">📥 PNG</button>
+                        <button class="btn btn-gold btn-sm" onclick="exportChart('crudeForestChart','svg')">📥 SVG</button>
+                    </div>
+                </div>
+                <div id="rt_pub" class="tab-content result-tab-content">
+                    <div class="result-title">📄 Publication-Ready Table</div>
+                    <div class="pub-table-container" id="pubCrudeTable"></div>
+                    <div class="button-row">
+                        <button class="btn btn-gold btn-sm" onclick="copyTable('pubCrudeTable', this)">📋 Copy Table</button>
+                        <button class="btn btn-secondary btn-sm" onclick="exportCrudeHTML()">💾 Export HTML</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('resultTabContents').innerHTML = contentsHtml;
+
+            // Forest plot
+            renderCrudeForest(r, expLabel);
+
+            // Pub table
+            renderCrudePubTable(r, expLabel, outLabel);
+
+            document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+        }
+
+        function renderCrudeForest(r, expLabel) {
+            const measures = ['Odds Ratio', 'Risk Ratio'];
+            const vals = [r.or, r.rr];
+            const lowers = [r.ciLower, r.rrCILower];
+            const uppers = [r.ciUpper, r.rrCIUpper];
+
+            const trace = {
+                x: vals, y: measures, mode: 'markers', type: 'scatter',
+                error_x: { type:'data', symmetric: false, array: uppers.map((u,i)=>u-vals[i]), arrayminus: vals.map((v,i)=>v-lowers[i]), color:'#004080', thickness:2, width:8 },
+                marker: { size: 14, color: '#004080', symbol: 'diamond' },
+                name: 'Estimate'
+            };
+
+            const layout = {
+                title: { text: 'Forest Plot: OR and RR with 95% CI', font: { family:'Oswald', size:16 } },
+                xaxis: { title: 'Effect Estimate', type: 'log', gridcolor:'#e2e8f0', zeroline: false },
+                yaxis: { autorange:'reversed' },
+                shapes: [{ type:'line', x0:1, x1:1, y0:-0.5, y1:1.5, line:{color:'#dc3545',width:2,dash:'dash'} }],
+                annotations: [{ x: Math.log10(1), y:1.7, text:'No Effect (1.0)', showarrow:false, font:{color:'#dc3545',size:11,family:'Oswald'} }],
+                plot_bgcolor:'#fff', paper_bgcolor:'#fff', font:{family:'Oswald'},
+                margin:{t:50,b:60,l:120,r:30}, showlegend:false
+            };
+
+            Plotly.newPlot('crudeForestChart', [trace], layout, {responsive:true});
+        }
+
+        function renderCrudePubTable(r, expLabel, outLabel) {
+            const pChi = r.chi2P<0.001?'< .001':r.chi2P.toFixed(3).replace(/^0/,'');
+            const pFisher = r.fisherP<0.001?'< .001':r.fisherP.toFixed(3).replace(/^0/,'');
+            let html = `<div class="pub-table-title">Table 1. Association between ${expLabel} and ${outLabel}</div>
+            <table class="pub-table">
+                <thead>
+                    <tr><th class="row-label">Measure</th><th>Estimate</th><th>95% CI</th><th>p-value</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="row-label">Odds Ratio</td><td>${r.or.toFixed(3)}</td><td>${r.ciLower.toFixed(3)} – ${r.ciUpper.toFixed(3)}</td><td>${pChi}${r.chi2P<0.05?'*':''}${r.chi2P<0.01?'*':''}${r.chi2P<0.001?'*':''}</td></tr>
+                    <tr><td class="row-label">Risk Ratio</td><td>${r.rr.toFixed(3)}</td><td>${r.rrCILower.toFixed(3)} – ${r.rrCIUpper.toFixed(3)}</td><td>—</td></tr>
+                    <tr><td class="row-label">Risk Difference</td><td>${(r.rd*100).toFixed(2)}%</td><td>${(r.rdCILower*100).toFixed(2)}% – ${(r.rdCIUpper*100).toFixed(2)}%</td><td>—</td></tr>
+                    <tr class="total-row"><td class="row-label" colspan="4">Test Statistics</td></tr>
+                    <tr><td class="row-label">Pearson χ²</td><td>${r.chi2.toFixed(3)}</td><td>df = 1</td><td>${pChi}</td></tr>
+                    <tr><td class="row-label">Yates' Corrected χ²</td><td>${r.chi2Yates.toFixed(3)}</td><td>df = 1</td><td>${r.chi2YatesP<0.001?'< .001':r.chi2YatesP.toFixed(3).replace(/^0/,'')}</td></tr>
+                    <tr><td class="row-label">Fisher's Exact Test</td><td>—</td><td>—</td><td>${pFisher}</td></tr>
+                </tbody>
+            </table>
+            <div class="pub-table-note">Note. *p < .05, **p < .01, ***p < .001. CI = confidence interval. N = ${r.origA+r.origB+r.origC+r.origD}.${r.correction?' Haldane-Anscombe correction (0.5) applied for zero cells.':''} ${r.minExpected<5?'Min expected cell = '+r.minExpected.toFixed(1)+'; Fisher\'s exact test recommended.':''}</div>`;
+            document.getElementById('pubCrudeTable').innerHTML = html;
+        }
+
+        // ============================================
+        // MODE 2: MANTEL-HAENSZEL
+        // ============================================
+        function runMHAnalysis() {
+            const expVar = document.getElementById('mhExposure').value;
+            const outVar = document.getElementById('mhOutcome').value;
+            const stratVar = document.getElementById('mhStrata').value;
+            if (!expVar||!outVar||!stratVar) { showAlert('Select all three variables.','error'); return; }
+
+            const data = datasets[2];
+            const expVals = [...new Set(data.map(r=>r[expVar]).filter(v=>v!==null&&v!==''))].sort();
+            const outVals = [...new Set(data.map(r=>r[outVar]).filter(v=>v!==null&&v!==''))].sort();
+            const strata = [...new Set(data.map(r=>r[stratVar]).filter(v=>v!==null&&v!==''))].sort();
+
+            if (expVals.length!==2||outVals.length!==2) { showAlert('Exposure and outcome must be binary.','error'); return; }
+
+            const expPos=expVals[1], outPos=outVals[1];
+            const stratumResults = [];
+            let numMH=0, denMH=0;
+            let breslowDay = 0;
+
+            strata.forEach(s => {
+                const sData = data.filter(r=>r[stratVar]===s);
+                let a=0,b=0,c=0,d=0;
+                sData.forEach(r => {
+                    const e=r[expVar], o=r[outVar];
+                    if (e===expPos&&o===outPos) a++;
+                    else if (e===expPos&&o!==outPos) b++;
+                    else if (e!==expPos&&o===outPos) c++;
+                    else d++;
+                });
+                const ni = a+b+c+d;
+                let aa=a,bb=b,cc=c,dd=d;
+                if (a===0||b===0||c===0||d===0) { aa+=0.5;bb+=0.5;cc+=0.5;dd+=0.5; }
+                const or_i = (aa*dd)/(bb*cc);
+                const lnOR = Math.log(or_i);
+                const seLnOR = Math.sqrt(1/aa+1/bb+1/cc+1/dd);
+
+                numMH += (a*d)/ni;
+                denMH += (b*c)/ni;
+
+                stratumResults.push({stratum:s, a,b,c,d, n:ni, or:or_i, lnOR, seLnOR,
+                    ciLower: Math.exp(lnOR-1.96*seLnOR), ciUpper: Math.exp(lnOR+1.96*seLnOR)
+                });
+            });
+
+            const orMH = numMH / denMH;
+            const lnMH = Math.log(orMH);
+
+            // SE of ln(MH OR) using Robins-Breslow-Greenland
+            let sumPR=0, sumPS_QR=0, sumQS=0;
+            stratumResults.forEach(s => {
+                const {a,b,c,d} = s;
+                const n = s.n;
+                const P = (a+d)/n, Q = (b+c)/n, R = a*d/n, S = b*c/n;
+                sumPR += P*R/n;    // should be divided by sum(R)^2 etc
+                sumPS_QR += (P*S + Q*R)/n;
+                sumQS += Q*S/n;
+            });
+            const seMH = Math.sqrt(sumPR/(2*numMH*numMH) + sumPS_QR/(2*numMH*denMH) + sumQS/(2*denMH*denMH));
+            const ciMHLower = Math.exp(lnMH - 1.96*seMH);
+            const ciMHUpper = Math.exp(lnMH + 1.96*seMH);
+
+            // MH Chi-square test
+            let sumA=0, sumEA=0, sumVarA=0;
+            stratumResults.forEach(s => {
+                const {a,b,c,d} = s;
+                const n = s.n;
+                const r1=a+b, r2=c+d, c1=a+c, c2=b+d;
+                sumA += a;
+                sumEA += r1*c1/n;
+                sumVarA += r1*r2*c1*c2/(n*n*(n-1));
+            });
+            const mhChi2 = Math.pow(Math.abs(sumA-sumEA)-0.5, 2) / sumVarA;
+            const mhChi2P = chiSquarePValue(mhChi2, 1);
+
+            // Breslow-Day test for homogeneity
+            let bdStat = 0;
+            stratumResults.forEach(s => {
+                const {a,b,c,d,or} = s;
+                bdStat += Math.pow(Math.log(or) - lnMH, 2) / (1/a+1/b+1/c+1/d > 0 ? s.seLnOR*s.seLnOR : 1);
+            });
+            const bdP = chiSquarePValue(bdStat, strata.length - 1);
+
+            // Also compute crude
+            let ca=0,cb=0,cc=0,cd=0;
+            data.forEach(r => {
+                const e=r[expVar], o=r[outVar];
+                if (e===expPos&&o===outPos) ca++;
+                else if (e===expPos&&o!==outPos) cb++;
+                else if (e!==expPos&&o===outPos) cc++;
+                else cd++;
+            });
+            const crudeOR = computeCrudeOR(ca||0.5, cb||0.5, cc||0.5, cd||0.5);
+
+            displayMHResults({
+                orMH, ciMHLower, ciMHUpper, seMH, mhChi2, mhChi2P,
+                bdStat, bdP, stratumResults, crudeOR,
+                expVar, outVar, stratVar, expPos, outPos, strata,
+                totalN: data.length
+            });
+        }
+
+        function displayMHResults(r) {
+            document.getElementById('resultsSection').classList.remove('hidden');
+            const sig = r.mhChi2P < 0.05;
+            const confChange = Math.abs(r.orMH - r.crudeOR.or)/r.crudeOR.or * 100;
+
+            document.getElementById('quickStats').innerHTML = `
+                <div class="stats-card"><h4>Total N</h4><div class="metric-value">${r.totalN}</div><p>${r.strata.length} strata</p></div>
+                <div class="stats-card"><h4>Crude OR</h4><div class="metric-value">${r.crudeOR.or.toFixed(3)}</div><p>[${r.crudeOR.ciLower.toFixed(3)}, ${r.crudeOR.ciUpper.toFixed(3)}]</p></div>
+                <div class="stats-card"><h4>MH Adjusted OR</h4><div class="metric-value ${r.orMH>1?'danger':'success'}">${r.orMH.toFixed(3)}</div><p>[${r.ciMHLower.toFixed(3)}, ${r.ciMHUpper.toFixed(3)}]</p></div>
+                <div class="stats-card"><h4>MH χ² p-value</h4><div class="metric-value ${sig?'success':'warning'}">${r.mhChi2P<0.0001?'< 0.0001':r.mhChi2P.toFixed(4)}</div><p>${sig?'Significant':'Not Significant'}</p></div>
+                <div class="stats-card"><h4>Breslow-Day p</h4><div class="metric-value ${r.bdP>0.05?'success':'danger'}">${r.bdP.toFixed(4)}</div><p>${r.bdP>0.05?'Homogeneous':'Heterogeneous'}</p></div>
+                <div class="stats-card"><h4>Confounding</h4><div class="metric-value">${confChange.toFixed(1)}%</div><p>${confChange>10?'Significant change':'Minimal change'}</p></div>
+            `;
+
+            let interp = `<p style="font-size:14px;line-height:1.8;">`;
+            interp += `<strong>Crude OR:</strong> ${r.crudeOR.or.toFixed(3)} | <strong>Adjusted OR (MH):</strong> ${r.orMH.toFixed(3)} (95% CI: ${r.ciMHLower.toFixed(3)} – ${r.ciMHUpper.toFixed(3)})<br>`;
+            interp += `<strong>Confounding Assessment:</strong> The ${r.stratVar} variable changed the OR by ${confChange.toFixed(1)}%. `;
+            interp += confChange > 10 ? `This exceeds the 10% threshold, indicating <strong>${r.stratVar} is a confounder</strong>. The MH-adjusted OR should be reported.` : `This is below 10%, suggesting minimal confounding by ${r.stratVar}.`;
+            interp += `<br><strong>Homogeneity:</strong> Breslow-Day χ² = ${r.bdStat.toFixed(3)}, p = ${r.bdP.toFixed(4)}. `;
+            interp += r.bdP > 0.05 ? 'ORs are homogeneous across strata — the MH pooled OR is appropriate.' : 'ORs differ significantly across strata — consider reporting stratum-specific ORs.';
+            interp += '</p>';
+            document.getElementById('interpretationText').innerHTML = interp;
+            document.getElementById('interpretation').className = sig ? 'interpretation' : 'interpretation not-sig';
+
+            // Tabs
+            document.getElementById('resultTabs').innerHTML = `
+                <button class="tab-btn active" onclick="showResultTab('rt_strata')">Stratum Tables</button>
+                <button class="tab-btn" onclick="showResultTab('rt_mhforest')">Forest Plot</button>
+                <button class="tab-btn" onclick="showResultTab('rt_mhpub')">Publication Table</button>
+            `;
+
+            let strataHtml = '<div class="result-title">📊 Stratum-Specific Results</div>';
+            r.stratumResults.forEach(s => {
+                strataHtml += `<div class="stratum-card"><h5>Stratum: ${r.stratVar} = ${s.stratum} (n = ${s.n})</h5>
+                    <table class="data-table" style="max-width:400px;font-size:12px;">
+                        <thead><tr><th></th><th>${r.outVar}(+)</th><th>${r.outVar}(−)</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-weight:700;">${r.expVar}(+)</td><td>${s.a}</td><td>${s.b}</td></tr>
+                            <tr><td style="font-weight:700;">${r.expVar}(−)</td><td>${s.c}</td><td>${s.d}</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:8px;font-size:13px;"><strong>OR = ${s.or.toFixed(3)}</strong> (95% CI: ${s.ciLower.toFixed(3)} – ${s.ciUpper.toFixed(3)})</p>
+                </div>`;
+            });
+
+            document.getElementById('resultTabContents').innerHTML = `
+                <div id="rt_strata" class="tab-content result-tab-content active">${strataHtml}</div>
+                <div id="rt_mhforest" class="tab-content result-tab-content">
+                    <div class="result-title">🌲 Forest Plot — Stratum-Specific & MH OR</div>
+                    <div class="chart-container" id="mhForestChart"></div>
+                    <div class="button-row"><button class="btn btn-gold btn-sm" onclick="exportChart('mhForestChart','png')">📥 PNG</button><button class="btn btn-gold btn-sm" onclick="exportChart('mhForestChart','svg')">📥 SVG</button></div>
+                </div>
+                <div id="rt_mhpub" class="tab-content result-tab-content">
+                    <div class="result-title">📄 Publication Table</div>
+                    <div class="pub-table-container" id="pubMHTable"></div>
+                    <div class="button-row"><button class="btn btn-gold btn-sm" onclick="copyTable('pubMHTable',this)">📋 Copy</button></div>
+                </div>
+            `;
+
+            // Forest plot
+            const labels = r.stratumResults.map(s=>`${r.stratVar}=${s.stratum}`).concat(['Crude OR', 'MH Adjusted OR']);
+            const ors = r.stratumResults.map(s=>s.or).concat([r.crudeOR.or, r.orMH]);
+            const lo = r.stratumResults.map(s=>s.ciLower).concat([r.crudeOR.ciLower, r.ciMHLower]);
+            const hi = r.stratumResults.map(s=>s.ciUpper).concat([r.crudeOR.ciUpper, r.ciMHUpper]);
+            const colors = r.stratumResults.map(()=>'#004080').concat(['#ffc107','#28a745']);
+            const sizes = r.stratumResults.map(()=>10).concat([14,16]);
+
+            Plotly.newPlot('mhForestChart', [{
+                x:ors, y:labels, mode:'markers', type:'scatter',
+                error_x:{type:'data',symmetric:false,array:hi.map((h,i)=>h-ors[i]),arrayminus:ors.map((o,i)=>o-lo[i]),color:'#004080',thickness:2,width:6},
+                marker:{size:sizes, color:colors, symbol:'diamond'}
+            }], {
+                xaxis:{title:'Odds Ratio',type:'log',gridcolor:'#e2e8f0'},
+                yaxis:{autorange:'reversed'},
+                shapes:[{type:'line',x0:1,x1:1,y0:-0.5,y1:labels.length-0.5,line:{color:'#dc3545',width:2,dash:'dash'}}],
+                plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{family:'Oswald'},
+                margin:{t:30,b:60,l:180,r:30},showlegend:false,
+                title:{text:'Mantel-Haenszel Forest Plot',font:{family:'Oswald',size:16}}
+            }, {responsive:true});
+
+            // Pub table
+            let pubHtml = `<div class="pub-table-title">Table 1. Stratified Analysis: ${r.expVar} and ${r.outVar} by ${r.stratVar}</div>
+                <table class="pub-table"><thead><tr><th class="row-label">Stratum</th><th>n</th><th>OR</th><th>95% CI</th></tr></thead><tbody>`;
+            r.stratumResults.forEach(s => {
+                pubHtml += `<tr><td class="row-label">${r.stratVar} = ${s.stratum}</td><td>${s.n}</td><td>${s.or.toFixed(3)}</td><td>${s.ciLower.toFixed(3)} – ${s.ciUpper.toFixed(3)}</td></tr>`;
+            });
+            const pMH = r.mhChi2P<0.001?'< .001':r.mhChi2P.toFixed(3).replace(/^0/,'');
+            pubHtml += `<tr class="total-row"><td class="row-label">Crude OR</td><td>${r.totalN}</td><td>${r.crudeOR.or.toFixed(3)}</td><td>${r.crudeOR.ciLower.toFixed(3)} – ${r.crudeOR.ciUpper.toFixed(3)}</td></tr>`;
+            pubHtml += `<tr class="total-row"><td class="row-label"><strong>MH Adjusted OR</strong></td><td>${r.totalN}</td><td><strong>${r.orMH.toFixed(3)}</strong></td><td><strong>${r.ciMHLower.toFixed(3)} – ${r.ciMHUpper.toFixed(3)}</strong></td></tr>`;
+            pubHtml += `</tbody></table>`;
+            pubHtml += `<div class="pub-table-note">Note. MH χ² = ${r.mhChi2.toFixed(3)}, p = ${pMH}. Breslow-Day homogeneity test: χ² = ${r.bdStat.toFixed(3)}, p = ${r.bdP.toFixed(3)}. Change in OR: ${confChange.toFixed(1)}%.</div>`;
+            document.getElementById('pubMHTable').innerHTML = pubHtml;
+
+            document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+        }
+
+        // ============================================
+        // MODE 3: LOGISTIC REGRESSION
+        // ============================================
+        function runLogisticRegression() {
+            const outVar = document.getElementById('logOutcome').value;
+            if (!outVar) { showAlert('Select outcome variable.','error'); return; }
+            if (logPredictors.length === 0) { showAlert('Select at least one predictor.','error'); return; }
+
+            const data = datasets[3];
+            const outVals = [...new Set(data.map(r=>r[outVar]).filter(v=>v!==null&&v!==''))];
+            if (outVals.length !== 2) { showAlert('Outcome must be binary (2 levels).','error'); return; }
+
+            // Prepare design matrix
+            const outPos = outVals.sort()[1];
+            const y = [];
+            const X = [];
+            const covNames = [];
+            let covInfo = [];
+
+            // Determine which predictors are categorical
+            logPredictors.forEach(pred => {
+                const vals = data.map(r=>r[pred]).filter(v=>v!==null&&v!=='');
+                const isCat = vals.some(v=>isNaN(v));
+                if (isCat) {
+                    const levels = [...new Set(vals)].sort();
+                    const ref = levels[0];
+                    levels.slice(1).forEach(lev => {
+                        covNames.push(`${pred}: ${lev} vs ${ref}`);
+                        covInfo.push({type:'cat', pred, level:lev, ref});
+                    });
+                } else {
+                    covNames.push(pred);
+                    covInfo.push({type:'num', pred});
+                }
+            });
+
+            // Build X and y
+            data.forEach(row => {
+                const outcome = row[outVar];
+                if (outcome === null || outcome === '') return;
+                const yVal = outcome == outPos ? 1 : 0;
+
+                const xRow = [];
+                let valid = true;
+                covInfo.forEach(info => {
+                    if (info.type === 'num') {
+                        const v = parseFloat(row[info.pred]);
+                        if (isNaN(v)) valid = false;
+                        xRow.push(v);
+                    } else {
+                        xRow.push(row[info.pred] === info.level ? 1 : 0);
+                    }
+                });
+                if (valid) { y.push(yVal); X.push(xRow); }
+            });
+
+            if (y.length < covNames.length + 10) { showAlert('Not enough valid observations for this model.','error'); return; }
+
+            // Fit logistic regression (Newton-Raphson / IRLS)
+            const n = y.length;
+            const p = covNames.length;
+            let beta = new Array(p + 1).fill(0); // +1 for intercept
+
+            const maxIter = 50;
+            for (let iter = 0; iter < maxIter; iter++) {
+                const mu = []; // predicted probabilities
+                X.forEach((xi, i) => {
+                    let lp = beta[0];
+                    for (let j = 0; j < p; j++) lp += beta[j+1] * xi[j];
+                    mu.push(1 / (1 + Math.exp(-lp)));
+                });
+
+                // Gradient
+                const grad = new Array(p+1).fill(0);
+                for (let i = 0; i < n; i++) {
+                    const r = y[i] - mu[i];
+                    grad[0] += r;
+                    for (let j = 0; j < p; j++) grad[j+1] += r * X[i][j];
+                }
+
+                // Hessian
+                const H = Array(p+1).fill(null).map(() => Array(p+1).fill(0));
+                for (let i = 0; i < n; i++) {
+                    const w = mu[i] * (1 - mu[i]);
+                    H[0][0] -= w;
+                    for (let j = 0; j < p; j++) {
+                        H[0][j+1] -= w * X[i][j];
+                        H[j+1][0] -= w * X[i][j];
+                        for (let k = 0; k < p; k++) {
+                            H[j+1][k+1] -= w * X[i][j] * X[i][k];
+                        }
+                    }
+                }
+
+                const invH = matrixInverse(H);
+                if (!invH) break;
+
+                let maxDelta = 0;
+                for (let j = 0; j <= p; j++) {
+                    let delta = 0;
+                    for (let k = 0; k <= p; k++) delta += invH[j][k] * grad[k];
+                    beta[j] -= delta;
+                    maxDelta = Math.max(maxDelta, Math.abs(delta));
+                }
+                if (maxDelta < 1e-8) break;
+            }
+
+            // Final info matrix for SEs
+            const muFinal = [];
+            X.forEach((xi, i) => {
+                let lp = beta[0];
+                for (let j = 0; j < p; j++) lp += beta[j+1] * xi[j];
+                muFinal.push(1 / (1 + Math.exp(-lp)));
+            });
+
+            const H = Array(p+1).fill(null).map(() => Array(p+1).fill(0));
+            for (let i = 0; i < n; i++) {
+                const w = muFinal[i] * (1 - muFinal[i]);
+                H[0][0] -= w;
+                for (let j = 0; j < p; j++) {
+                    H[0][j+1] -= w * X[i][j];
+                    H[j+1][0] -= w * X[i][j];
+                    for (let k = 0; k < p; k++) H[j+1][k+1] -= w * X[i][j] * X[i][k];
+                }
+            }
+            const covMatrix = matrixInverse(H);
+            const se = covMatrix ? covMatrix.map((row,i) => Math.sqrt(Math.abs(row[i]))) : new Array(p+1).fill(NaN);
+
+            // Log-likelihood
+            let llModel = 0, llNull = 0;
+            const pBar = y.reduce((a,b)=>a+b,0)/n;
+            for (let i = 0; i < n; i++) {
+                llModel += y[i]*Math.log(muFinal[i]+1e-15) + (1-y[i])*Math.log(1-muFinal[i]+1e-15);
+                llNull += y[i]*Math.log(pBar+1e-15) + (1-y[i])*Math.log(1-pBar+1e-15);
+            }
+            const lr = -2*(llNull - llModel);
+            const lrP = chiSquarePValue(lr, p);
+
+            // McFadden's R²
+            const pseudoR2 = 1 - llModel/llNull;
+            // AIC
+            const aic = -2*llModel + 2*(p+1);
+
+            // Results
+            const results = covNames.map((name, i) => {
+                const b = beta[i+1];
+                const s = se[i+1];
+                const z = b / s;
+                const pv = 2*(1-normalCDF(Math.abs(z)));
+                const or = Math.exp(b);
+                const orLo = Math.exp(b - 1.96*s);
+                const orHi = Math.exp(b + 1.96*s);
+                return { name, beta: b, se: s, z, p: pv, or, orLo, orHi };
+            });
+
+            displayLogisticResults({
+                results, n, p, beta0: beta[0], se0: se[0],
+                llModel, llNull, lr, lrP, pseudoR2, aic,
+                outVar, outPos, nEvents: y.reduce((a,b)=>a+b,0)
+            });
+        }
+
+        function matrixInverse(M) {
+            const n = M.length;
+            const A = M.map(r=>[...r]);
+            const I = Array(n).fill(null).map((_,i) => Array(n).fill(0).map((_,j) => i===j?1:0));
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k=i+1;k<n;k++) if (Math.abs(A[k][i])>Math.abs(A[maxRow][i])) maxRow=k;
+                [A[i],A[maxRow]]=[A[maxRow],A[i]]; [I[i],I[maxRow]]=[I[maxRow],I[i]];
+                const pivot = A[i][i];
+                if (Math.abs(pivot)<1e-12) return null;
+                for (let j=0;j<n;j++) { A[i][j]/=pivot; I[i][j]/=pivot; }
+                for (let k=0;k<n;k++) {
+                    if (k!==i) {
+                        const f=A[k][i];
+                        for (let j=0;j<n;j++) { A[k][j]-=f*A[i][j]; I[k][j]-=f*I[i][j]; }
+                    }
+                }
+            }
+            return I;
+        }
+
+        function displayLogisticResults(r) {
+            document.getElementById('resultsSection').classList.remove('hidden');
+            const sigCount = r.results.filter(x=>x.p<0.05).length;
+
+            document.getElementById('quickStats').innerHTML = `
+                <div class="stats-card"><h4>Observations</h4><div class="metric-value">${r.n}</div><p>Events: ${r.nEvents}</p></div>
+                <div class="stats-card"><h4>Predictors</h4><div class="metric-value">${r.p}</div><p>${sigCount} significant</p></div>
+                <div class="stats-card"><h4>LR χ²</h4><div class="metric-value">${r.lr.toFixed(2)}</div><p>p = ${r.lrP<0.0001?'< 0.0001':r.lrP.toFixed(4)}</p></div>
+                <div class="stats-card"><h4>Pseudo R²</h4><div class="metric-value">${r.pseudoR2.toFixed(4)}</div><p>McFadden's</p></div>
+                <div class="stats-card"><h4>AIC</h4><div class="metric-value">${r.aic.toFixed(1)}</div><p>Lower = better</p></div>
+                <div class="stats-card"><h4>Log-Likelihood</h4><div class="metric-value">${r.llModel.toFixed(1)}</div><p>Model fit</p></div>
+            `;
+
+            let interp = `<p style="font-size:14px;line-height:1.8;">`;
+            interp += `<strong>Model:</strong> Logistic regression predicting ${r.outVar} = ${r.outPos} (n = ${r.n}, events = ${r.nEvents})<br>`;
+            interp += `<strong>Overall Fit:</strong> LR χ²(${r.p}) = ${r.lr.toFixed(2)}, p = ${r.lrP<0.0001?'< 0.0001':r.lrP.toFixed(4)} — ${r.lrP<0.05?'Model is statistically significant':'Model is not significant'}<br>`;
+            const sigRes = r.results.filter(x=>x.p<0.05);
+            if (sigRes.length > 0) {
+                interp += `<strong>Significant Predictors:</strong><br>`;
+                sigRes.forEach(s => {
+                    interp += `&nbsp;&nbsp;• ${s.name}: OR = ${s.or.toFixed(3)} (95% CI: ${s.orLo.toFixed(3)} – ${s.orHi.toFixed(3)}), p = ${s.p<0.001?'< 0.001':s.p.toFixed(3)}`;
+                    interp += s.or > 1 ? ` — ${((s.or-1)*100).toFixed(1)}% increased odds` : ` — ${((1-s.or)*100).toFixed(1)}% decreased odds`;
+                    interp += '<br>';
+                });
+            } else {
+                interp += '<strong>No predictors reached statistical significance at α = 0.05.</strong>';
+            }
+            interp += '</p>';
+            document.getElementById('interpretationText').innerHTML = interp;
+            document.getElementById('interpretation').className = r.lrP < 0.05 ? 'interpretation' : 'interpretation not-sig';
+
+            // Tabs
+            document.getElementById('resultTabs').innerHTML = `
+                <button class="tab-btn active" onclick="showResultTab('rt_coef')">Coefficients</button>
+                <button class="tab-btn" onclick="showResultTab('rt_logforest')">Forest Plot</button>
+                <button class="tab-btn" onclick="showResultTab('rt_logpub')">Publication Table</button>
+            `;
+
+            // Coefficients table
+            let coefHtml = `<table class="data-table"><thead><tr><th>Variable</th><th>β (Coef)</th><th>SE</th><th>Wald z</th><th>p-value</th><th>OR</th><th>95% CI Lower</th><th>95% CI Upper</th></tr></thead><tbody>`;
+            coefHtml += `<tr style="background:#ebf4ff;"><td style="text-align:left;font-weight:700;">(Intercept)</td><td>${r.beta0.toFixed(4)}</td><td>${r.se0.toFixed(4)}</td><td>${(r.beta0/r.se0).toFixed(4)}</td><td>${(2*(1-normalCDF(Math.abs(r.beta0/r.se0)))).toFixed(4)}</td><td>—</td><td>—</td><td>—</td></tr>`;
+            r.results.forEach(res => {
+                const cls = res.p < 0.05 ? 'style="background:#d4edda;"' : '';
+                coefHtml += `<tr ${cls}><td style="text-align:left;font-weight:700;">${res.name}</td><td>${res.beta.toFixed(4)}</td><td>${res.se.toFixed(4)}</td><td>${res.z.toFixed(4)}</td><td>${res.p<0.0001?'< 0.0001':res.p.toFixed(4)}</td><td><strong>${res.or.toFixed(3)}</strong></td><td>${res.orLo.toFixed(3)}</td><td>${res.orHi.toFixed(3)}</td></tr>`;
+            });
+            coefHtml += '</tbody></table>';
+
+            // Forest plot
+            let forestHtml = `<div class="chart-container" id="logForestChart"></div>
+                <div class="button-row"><button class="btn btn-gold btn-sm" onclick="exportChart('logForestChart','png')">📥 PNG</button><button class="btn btn-gold btn-sm" onclick="exportChart('logForestChart','svg')">📥 SVG</button></div>`;
+
+            // Pub table
+            let pubHtml = `<div class="pub-table-container" id="pubLogTable">
+                <div class="pub-table-title">Table 1. Multivariable Logistic Regression Results: Predictors of ${r.outVar}</div>
+                <table class="pub-table"><thead><tr><th class="row-label">Variable</th><th>β</th><th>SE</th><th>OR</th><th>95% CI</th><th>p</th></tr></thead><tbody>`;
+            r.results.forEach(res => {
+                const pStr = res.p<0.001?'< .001':res.p.toFixed(3).replace(/^0/,'');
+                const stars = res.p<0.001?'***':(res.p<0.01?'**':(res.p<0.05?'*':''));
+                pubHtml += `<tr><td class="row-label">${res.name}</td><td>${res.beta.toFixed(3)}</td><td>${res.se.toFixed(3)}</td><td>${res.or.toFixed(3)}</td><td>${res.orLo.toFixed(3)} – ${res.orHi.toFixed(3)}</td><td>${pStr}${stars}</td></tr>`;
+            });
+            pubHtml += `</tbody></table>
+                <div class="pub-table-note">Note. *p < .05, **p < .01, ***p < .001. OR = odds ratio; CI = confidence interval.<br>
+                Model fit: LR χ²(${r.p}) = ${r.lr.toFixed(2)}, p = ${r.lrP<0.001?'< .001':r.lrP.toFixed(3)}. McFadden's R² = ${r.pseudoR2.toFixed(4)}. AIC = ${r.aic.toFixed(1)}.<br>
+                N = ${r.n}. Events = ${r.nEvents}.</div></div>
+                <div class="button-row"><button class="btn btn-gold btn-sm" onclick="copyTable('pubLogTable',this)">📋 Copy</button></div>`;
+
+            document.getElementById('resultTabContents').innerHTML = `
+                <div id="rt_coef" class="tab-content result-tab-content active"><div class="result-title">📊 Logistic Regression Coefficients</div>${coefHtml}</div>
+                <div id="rt_logforest" class="tab-content result-tab-content"><div class="result-title">🌲 Forest Plot — Adjusted Odds Ratios</div>${forestHtml}</div>
+                <div id="rt_logpub" class="tab-content result-tab-content"><div class="result-title">📄 Publication Table</div>${pubHtml}</div>
+            `;
+
+            // Render forest
+            const labels = r.results.map(x=>x.name);
+            const ors = r.results.map(x=>x.or);
+            const errHi = r.results.map(x=>x.orHi-x.or);
+            const errLo = r.results.map(x=>x.or-x.orLo);
+            const mColors = r.results.map(x=>x.p<0.05?(x.or>1?'#dc3545':'#28a745'):'#6c757d');
+
+            Plotly.newPlot('logForestChart', [{
+                x:ors,y:labels,mode:'markers',type:'scatter',
+                error_x:{type:'data',symmetric:false,array:errHi,arrayminus:errLo,color:'#004080',thickness:2,width:6},
+                marker:{size:12,color:mColors,symbol:'diamond'}
+            }], {
+                xaxis:{title:'Adjusted Odds Ratio',type:'log',gridcolor:'#e2e8f0'},
+                yaxis:{autorange:'reversed'},
+                shapes:[{type:'line',x0:1,x1:1,y0:-0.5,y1:labels.length-0.5,line:{color:'#dc3545',width:2,dash:'dash'}}],
+                plot_bgcolor:'#fff',paper_bgcolor:'#fff',font:{family:'Oswald'},
+                margin:{t:30,b:60,l:250,r:30},showlegend:false,
+                title:{text:'Adjusted ORs with 95% CI',font:{family:'Oswald',size:16}}
+            }, {responsive:true});
+
+            document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+        }
+
+        // ============================================
+        // EXPORT
+        // ============================================
+        function copyTable(id, btn) {
+            const c = document.getElementById(id);
+            const range = document.createRange();
+            range.selectNode(c);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✓ COPIED!';
+            btn.style.background = '#276749'; btn.style.borderColor = '#276749'; btn.style.color = '#fff';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.background=''; btn.style.borderColor=''; btn.style.color=''; }, 2000);
+        }
+
+        function exportChart(id, fmt) {
+            Plotly.downloadImage(id, {format:fmt, width:900, height:500, filename:`or_${id}`});
+        }
+
+        function exportCrudeHTML() {
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Odds Ratio Results</title>
+<style>body{font-family:'Times New Roman',serif;font-size:12pt;max-width:800px;margin:40px auto;line-height:1.6;}
+h1{text-align:center;font-size:14pt;margin-bottom:30px;}.pub-table-container{margin:25px 0;}
+.pub-table-title{font-size:12pt;font-weight:bold;margin-bottom:8px;font-style:italic;}
+.pub-table{width:100%;border-collapse:collapse;margin:10px 0;}.pub-table th,.pub-table td{padding:8px 12px;}
+.pub-table thead{border-top:2px solid #000;border-bottom:1px solid #000;}.pub-table thead th{font-weight:bold;text-align:center;}
+.pub-table tbody{border-bottom:2px solid #000;}.pub-table tbody td{border:none;}.pub-table .row-label{text-align:left;}
+.pub-table .total-row{border-top:1px solid #000;}.pub-table-note{font-size:10pt;font-style:italic;margin-top:10px;line-height:1.5;}
+</style></head><body><h1>Odds Ratio Analysis Results</h1>
+${document.getElementById('pubCrudeTable')?.innerHTML || ''}</body></html>`;
+            const blob = new Blob([html],{type:'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href=url; a.download='odds_ratio_results.html'; a.click();
+            URL.revokeObjectURL(url);
+            showAlert('HTML exported!','success');
+        }
+
+        // ============================================
+        // SAMPLE DATA
+        // ============================================
+        function downloadSampleData(mode) {
+            const sampleData = [];
+            const districts = ['Western Area','Bo','Kenema','Makeni','Kailahun'];
+
+            for (let i = 0; i < 300; i++) {
+                const itn = Math.random() < 0.55 ? 1 : 0;
+                const ageGroup = Math.random() < 0.5 ? 'Adult' : 'Child';
+                const district = districts[Math.floor(Math.random()*5)];
+                const gender = Math.random() < 0.5 ? 'Male' : 'Female';
+                // Simulate: ITN use is protective, children at higher risk
+                let pMalaria = 0.3;
+                if (itn === 0) pMalaria += 0.15;
+                if (ageGroup === 'Child') pMalaria += 0.10;
+                if (gender === 'Male') pMalaria += 0.05;
+                const malaria = Math.random() < pMalaria ? 1 : 0;
+
+                sampleData.push({
+                    ID: i+1,
+                    ITN_Use: itn,
+                    Malaria_Case: malaria,
+                    Age_Group: ageGroup,
+                    District: district,
+                    Gender: gender
+                });
+            }
+
+            const csv = Papa.unparse(sampleData);
+            const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href=url; a.download=`odds_ratio_sample_data.csv`; a.click();
+            URL.revokeObjectURL(url);
+            showAlert('Sample data downloaded! Use ITN_Use (exposure), Malaria_Case (outcome), Age_Group or District (stratifier).','success');
+        }
+    </script>
+</body>
+</html>
